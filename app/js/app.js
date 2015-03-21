@@ -25,8 +25,16 @@ function main() {
     core.onload = function () {
         var KEY_WIDTH = 40;
         var KEY_HEIGHT = 200;
+        var KEY_BLACK_HEIGHT = 120;
         var KEYBOARD_LEFT = (DISPLAY_WIDTH / 2) - (4 * KEY_WIDTH);
         var KEYBOARD_TOP = (DISPLAY_HEIGHT / 2) - (KEY_HEIGHT / 2);
+
+        /**
+         * 現在押されているキーです。
+         * @type Sprite
+         */
+        var currentKey = null;
+
         var background = (function () {
             var sprite = new Sprite(DISPLAY_WIDTH, DISPLAY_HEIGHT);
             sprite.image = (function () {
@@ -62,6 +70,48 @@ function main() {
             };
         })();
 
+        var keyboard = (function () {
+            var sprite = new Sprite(8 * KEY_WIDTH, KEY_HEIGHT);
+            sprite.x = KEYBOARD_LEFT;
+            sprite.y = KEYBOARD_TOP;
+            var getPressedKey = function (x, y) {
+                var localX = x - KEYBOARD_LEFT;
+                var whiteIndex = Math.floor(localX / KEY_WIDTH);
+                if (whiteIndex < 0 || 8 <= whiteIndex) {
+                    return null;
+                }
+                if (KEYBOARD_TOP + KEY_BLACK_HEIGHT < y) {
+                    return keys.white[whiteIndex];
+                }
+                var blackIndex = Math.floor((localX - (KEY_WIDTH / 2)) / KEY_WIDTH);
+                var foundIndex = [0, 1, 3, 4, 5].indexOf(blackIndex);
+                return (foundIndex !== -1) ? keys.black[foundIndex] : keys.white[whiteIndex];
+            };
+            var pressedAction = function (e) {
+                var pressedKey = getPressedKey(e.x, e.y);
+                if (pressedKey === currentKey) {
+                    return;
+                }
+
+                if (currentKey) {
+                    currentKey.frame--;
+                }
+                if (pressedKey) {
+                    pressedKey.frame++;
+                }
+                currentKey = pressedKey;
+            };
+            sprite.addEventListener(Event.TOUCH_START, pressedAction);
+            sprite.addEventListener(Event.TOUCH_MOVE, pressedAction);
+            sprite.addEventListener(Event.TOUCH_END, function () {
+                if (currentKey) {
+                    currentKey.frame--;
+                }
+                currentKey = null;
+            });
+            return sprite;
+        })();
+
         var scene = core.rootScene;
         scene.addChild(background);
         keys.white.map(function (key) {
@@ -70,6 +120,7 @@ function main() {
         keys.black.map(function (key) {
             scene.addChild(key);
         });
+        scene.addChild(keyboard);
     };
     core.start();
 }
