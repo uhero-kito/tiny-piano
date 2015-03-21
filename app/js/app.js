@@ -18,12 +18,15 @@ function main() {
         bodyStyle.height = newHeight + "px";
     })();
 
+    var getAudioAssetName = function (name) {
+        var ext = (enchant.ENV.BROWSER === "ie") ? ".mp3" : ".ogg";
+        return "sound/" + name + ext;
+    };
+
     enchant();
     var core = new Core(DISPLAY_WIDTH, DISPLAY_HEIGHT);
     ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].map(function (filename) {
-        var ext = (enchant.ENV.BROWSER === "ie") ? ".mp3" : ".ogg";
-        var assetName = "sound/" + filename + ext;
-        core.preload(assetName);
+        core.preload(getAudioAssetName(filename));
     });
     core.preload("img/keys.png");
     core.fps = 60;
@@ -33,6 +36,11 @@ function main() {
         var KEY_BLACK_HEIGHT = 120;
         var KEYBOARD_LEFT = (DISPLAY_WIDTH / 2) - (4 * KEY_WIDTH);
         var KEYBOARD_TOP = (DISPLAY_HEIGHT / 2) - (KEY_HEIGHT / 2);
+
+        var playSE = function (name) {
+            var se = core.assets[getAudioAssetName(name)];
+            se.clone().play();
+        };
 
         /**
          * 現在押されているキーです。
