@@ -20,8 +20,13 @@ function main() {
 
     enchant();
     var core = new Core(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    core.preload("img/keys.png");
     core.fps = 60;
     core.onload = function () {
+        var KEY_WIDTH = 40;
+        var KEY_HEIGHT = 200;
+        var KEYBOARD_LEFT = (DISPLAY_WIDTH / 2) - (4 * KEY_WIDTH);
+        var KEYBOARD_TOP = (DISPLAY_HEIGHT / 2) - (KEY_HEIGHT / 2);
         var background = (function () {
             var sprite = new Sprite(DISPLAY_WIDTH, DISPLAY_HEIGHT);
             sprite.image = (function () {
@@ -38,8 +43,33 @@ function main() {
             })();
             return sprite;
         })();
+        var keys = (function () {
+            var createKey = function (index, isWhite) {
+                var sprite = new Sprite(KEY_WIDTH, KEY_HEIGHT);
+                sprite.image = core.assets["img/keys.png"];
+                sprite.frame = isWhite ? 0 : 2;
+                sprite.x = KEYBOARD_LEFT + (index * KEY_WIDTH / 2);
+                sprite.y = KEYBOARD_TOP;
+                return sprite;
+            };
+            return {
+                white: [0, 2, 4, 6, 8, 10, 12, 14].map(function (index) {
+                    return createKey(index, true);
+                }),
+                black: [1, 3, 7, 9, 11].map(function (index) {
+                    return createKey(index, false);
+                })
+            };
+        })();
+
         var scene = core.rootScene;
         scene.addChild(background);
+        keys.white.map(function (key) {
+            scene.addChild(key);
+        });
+        keys.black.map(function (key) {
+            scene.addChild(key);
+        });
     };
     core.start();
 }
