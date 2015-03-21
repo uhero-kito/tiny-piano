@@ -82,6 +82,12 @@ function main() {
                 })
             };
         })();
+        ["00", "02", "04", "05", "07", "09", "11", "12"].map(function (note, index) {
+            keys.white[index].note = note;
+        });
+        ["01", "03", "06", "08", "10"].map(function (note, index) {
+            keys.black[index].note = note;
+        });
 
         var keyboard = (function () {
             var sprite = new Sprite(8 * KEY_WIDTH, KEY_HEIGHT);
@@ -111,6 +117,7 @@ function main() {
                 }
                 if (pressedKey) {
                     pressedKey.frame++;
+                    playSE(pressedKey.note);
                 }
                 currentKey = pressedKey;
             };
