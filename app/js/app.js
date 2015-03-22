@@ -48,6 +48,18 @@ function main() {
          */
         var currentKey = null;
 
+        /**
+         * 最後に押されたキーです。(誤発火防止対策）
+         * @type Sprite
+         */
+        var previousKey = null;
+
+        /**
+         * 最後にキーが離された時のフレーム数です。（誤発火防止対策）
+         * @type Number
+         */
+        var lastReleasedTime = 0;
+
         var background = (function () {
             var sprite = new Sprite(DISPLAY_WIDTH, DISPLAY_HEIGHT);
             sprite.image = (function () {
@@ -106,9 +118,28 @@ function main() {
                 var foundIndex = [0, 1, 3, 4, 5].indexOf(blackIndex);
                 return (foundIndex !== -1) ? keys.black[foundIndex] : keys.white[whiteIndex];
             };
+            /**
+             * 発火したイベントが誤検知かどうかを判定します。
+             * 短期間 (1 フレーム以内) に連打された場合は誤検知とみなします。
+             * 
+             * @param {Sprite} key イベントによって押されたキー
+             * @returns {Boolean} 誤検知の場合は false, そうでない場合は true
+             */
+            var validatePressedKey = function (key) {
+                if (!key) {
+                    return true;
+                }
+                if (key !== previousKey) {
+                    return true;
+                }
+                return (1 < sprite.age - lastReleasedTime);
+            };
             var pressedAction = function (e) {
                 var pressedKey = getPressedKey(e.x, e.y);
                 if (pressedKey === currentKey) {
+                    return;
+                }
+                if (!validatePressedKey(pressedKey)) {
                     return;
                 }
 
@@ -126,6 +157,8 @@ function main() {
             sprite.addEventListener(Event.TOUCH_END, function () {
                 if (currentKey) {
                     currentKey.frame--;
+                    previousKey = currentKey;
+                    lastReleasedTime = sprite.age;
                 }
                 currentKey = null;
             });
