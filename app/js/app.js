@@ -18,6 +18,14 @@ function main() {
         bodyStyle.height = newHeight + "px";
     })();
 
+    /**
+     * 引数の basename ("00" など) を、実際のファイル名 ("sound/00.ogg" など) に変換します。
+     * 各ブラウザがサポートしているフォーマットの違いを吸収するため、
+     * IE のみ .mp3, その他のブラウザは .ogg 形式を返します。
+     * 
+     * @param {type} name ファイルの basename
+     * @returns {String} ファイル名
+     */
     var getAudioAssetName = function (name) {
         var ext = (enchant.ENV.BROWSER === "ie") ? ".mp3" : ".ogg";
         return "sound/" + name + ext;
@@ -118,6 +126,7 @@ function main() {
                 var foundIndex = [0, 1, 3, 4, 5].indexOf(blackIndex);
                 return (foundIndex !== -1) ? keys.black[foundIndex] : keys.white[whiteIndex];
             };
+
             /**
              * 発火したイベントが誤検知かどうかを判定します。
              * 短期間 (1 フレーム以内) に連打された場合は誤検知とみなします。
@@ -134,6 +143,13 @@ function main() {
                 }
                 return (1 < sprite.age - lastReleasedTime);
             };
+
+            /**
+             * キーボード上をタッチまたはスワイプした際に発火する関数です。
+             * 現在押されているキーを判別し、対応する音声ファイルを鳴らします。
+             * 
+             * @param {Event} e
+             */
             var pressedAction = function (e) {
                 var pressedKey = getPressedKey(e.x, e.y);
                 if (pressedKey === currentKey) {
