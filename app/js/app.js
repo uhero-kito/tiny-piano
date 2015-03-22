@@ -47,7 +47,24 @@ function main() {
 
         var playSE = function (name) {
             var se = core.assets[getAudioAssetName(name)];
-            se.clone().play();
+            switch (enchant.ENV.BROWSER) {
+                case "firefox":
+                    se.play();
+                    break;
+                case "ie":
+                    // IE 10 以下では clone() の負荷が高く遅延が目立つため、既存の Sound オブジェクトを再利用します。
+                    // 既存の Sound が再生中の場合は一度 stop します。
+                    if (/MSIE/.test(navigator.userAgent)) {
+                        se.stop();
+                        se.play();
+                    } else {
+                        se.clone().play();
+                    }
+                    break;
+                default:
+                    se.clone().play();
+                    break;
+            }
         };
 
         /**
