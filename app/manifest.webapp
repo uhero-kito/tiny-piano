@@ -1,0 +1,18 @@
+{
+    "default_locale" : "ja",
+    "description"    : "enchant.js を使ったサウンド再生のサンプルです。",
+    "developer" : {
+        "name" : "KITO, takayuki",
+        "url"  : "https://github.com/uhero-kito"
+    },
+    "icons" : {
+        "128": "/img/icon-128.png",
+        "320": "/img/icon-320.png",
+        "512": "/img/icon-512.png"
+    },
+    "launch_path": "/index.html",
+    "name": "Tiny Piano",
+    "type": "web",
+    "version": "1.0.0",
+    "csp": "'default-src' *;'script-src' 'self';'object-src' 'none';'frame-src' 'self';'style-src' 'unsafe-inline' 'self';'connect-src'"
+}
