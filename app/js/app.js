@@ -18,8 +18,24 @@ function main() {
         bodyStyle.height = newHeight + "px";
     })();
 
+    /**
+     * 引数の basename ("00" など) を、実際のファイル名 ("sound/00.ogg" など) に変換します。
+     * 各ブラウザがサポートしているフォーマットの違いを吸収するため、
+     * IE のみ .mp3, その他のブラウザは .ogg 形式を返します。
+     * 
+     * @param {type} name ファイルの basename
+     * @returns {String} ファイル名
+     */
+    var getAudioAssetName = function (name) {
+        var ext = (enchant.ENV.BROWSER === "ie") ? ".mp3" : ".ogg";
+        return "sound/" + name + ext;
+    };
+
     enchant();
     var core = new Core(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].map(function (filename) {
+        core.preload(getAudioAssetName(filename));
+    });
     core.preload("img/keys.png");
     core.fps = 60;
     core.onload = function () {
@@ -29,11 +45,45 @@ function main() {
         var KEYBOARD_LEFT = (DISPLAY_WIDTH / 2) - (4 * KEY_WIDTH);
         var KEYBOARD_TOP = (DISPLAY_HEIGHT / 2) - (KEY_HEIGHT / 2);
 
+        var playSE = function (name) {
+            var se = core.assets[getAudioAssetName(name)];
+            switch (enchant.ENV.BROWSER) {
+                case "firefox":
+                    se.play();
+                    break;
+                case "ie":
+                    // IE 10 以下では clone() の負荷が高く遅延が目立つため、既存の Sound オブジェクトを再利用します。
+                    // 既存の Sound が再生中の場合は一度 stop します。
+                    if (/MSIE/.test(navigator.userAgent)) {
+                        se.stop();
+                        se.play();
+                    } else {
+                        se.clone().play();
+                    }
+                    break;
+                default:
+                    se.clone().play();
+                    break;
+            }
+        };
+
         /**
          * 現在押されているキーです。
          * @type Sprite
          */
         var currentKey = null;
+
+        /**
+         * 最後に押されたキーです。(誤発火防止対策）
+         * @type Sprite
+         */
+        var previousKey = null;
+
+        /**
+         * 最後にキーが離された時のフレーム数です。（誤発火防止対策）
+         * @type Number
+         */
+        var lastReleasedTime = 0;
 
         var background = (function () {
             var sprite = new Sprite(DISPLAY_WIDTH, DISPLAY_HEIGHT);
@@ -69,6 +119,12 @@ function main() {
                 })
             };
         })();
+        ["00", "02", "04", "05", "07", "09", "11", "12"].map(function (note, index) {
+            keys.white[index].note = note;
+        });
+        ["01", "03", "06", "08", "10"].map(function (note, index) {
+            keys.black[index].note = note;
+        });
 
         var keyboard = (function () {
             var sprite = new Sprite(8 * KEY_WIDTH, KEY_HEIGHT);
@@ -87,9 +143,36 @@ function main() {
                 var foundIndex = [0, 1, 3, 4, 5].indexOf(blackIndex);
                 return (foundIndex !== -1) ? keys.black[foundIndex] : keys.white[whiteIndex];
             };
+
+            /**
+             * 発火したイベントが誤検知かどうかを判定します。
+             * 短期間 (1 フレーム以内) に連打された場合は誤検知とみなします。
+             * 
+             * @param {Sprite} key イベントによって押されたキー
+             * @returns {Boolean} 誤検知の場合は false, そうでない場合は true
+             */
+            var validatePressedKey = function (key) {
+                if (!key) {
+                    return true;
+                }
+                if (key !== previousKey) {
+                    return true;
+                }
+                return (1 < sprite.age - lastReleasedTime);
+            };
+
+            /**
+             * キーボード上をタッチまたはスワイプした際に発火する関数です。
+             * 現在押されているキーを判別し、対応する音声ファイルを鳴らします。
+             * 
+             * @param {Event} e
+             */
             var pressedAction = function (e) {
                 var pressedKey = getPressedKey(e.x, e.y);
                 if (pressedKey === currentKey) {
+                    return;
+                }
+                if (!validatePressedKey(pressedKey)) {
                     return;
                 }
 
@@ -98,6 +181,7 @@ function main() {
                 }
                 if (pressedKey) {
                     pressedKey.frame++;
+                    playSE(pressedKey.note);
                 }
                 currentKey = pressedKey;
             };
@@ -106,6 +190,8 @@ function main() {
             sprite.addEventListener(Event.TOUCH_END, function () {
                 if (currentKey) {
                     currentKey.frame--;
+                    previousKey = currentKey;
+                    lastReleasedTime = sprite.age;
                 }
                 currentKey = null;
             });
