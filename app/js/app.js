@@ -18,16 +18,29 @@ function main() {
         bodyStyle.height = newHeight + "px";
     })();
 
+    var checkMp3ByBrowser = function (browser, useragent) {
+        if (browser === "ie") {
+            return true;
+        }
+        if (/iPhone/.test(useragent)) {
+            return true;
+        }
+        if (/iPad/.test(useragent)) {
+            return true;
+        }
+        return false;
+    };
+
     /**
      * 引数の basename ("00" など) を、実際のファイル名 ("sound/00.ogg" など) に変換します。
      * 各ブラウザがサポートしているフォーマットの違いを吸収するため、
-     * IE のみ .mp3, その他のブラウザは .ogg 形式を返します。
+     * IE と iOS については .mp3, その他のブラウザは .ogg 形式を返します。
      * 
      * @param {type} name ファイルの basename
      * @returns {String} ファイル名
      */
     var getAudioAssetName = function (name) {
-        var ext = (enchant.ENV.BROWSER === "ie") ? ".mp3" : ".ogg";
+        var ext = checkMp3ByBrowser(enchant.ENV.BROWSER, navigator.userAgent) ? ".mp3" : ".ogg";
         return "sound/" + name + ext;
     };
 
