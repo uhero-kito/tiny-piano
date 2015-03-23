@@ -6,6 +6,7 @@
         "url"  : "https://github.com/uhero-kito"
     },
     "icons" : {
+        "64": "/img/icon-064.png",
         "128": "/img/icon-128.png",
         "320": "/img/icon-320.png",
         "512": "/img/icon-512.png"
