@@ -1,4 +1,4 @@
-/* global enchant, Event */
+/* global enchant, Event, Class, Sprite */
 
 function main() {
     var DISPLAY_WIDTH = 360;
@@ -94,6 +94,17 @@ function main() {
             }
         };
 
+        var Note = Class.create(Sprite, {
+            initialize: function (index, soundName) {
+                Sprite.call(this, KEY_WIDTH, KEY_HEIGHT);
+                this.image = core.assets["img/keys.png"];
+                this.frame = (index % 2) ? 2 : 0;
+                this.x = KEYBOARD_LEFT + (index * KEY_WIDTH / 2);
+                this.y = KEYBOARD_TOP;
+                this.soundName = soundName;
+            }
+        });
+
         /**
          * 現在押されているキーです。
          * @type Sprite
@@ -128,30 +139,19 @@ function main() {
             })();
             return sprite;
         })();
-        var keys = (function () {
-            var createKey = function (index, isWhite) {
-                var sprite = new Sprite(KEY_WIDTH, KEY_HEIGHT);
-                sprite.image = core.assets["img/keys.png"];
-                sprite.frame = isWhite ? 0 : 2;
-                sprite.x = KEYBOARD_LEFT + (index * KEY_WIDTH / 2);
-                sprite.y = KEYBOARD_TOP;
-                return sprite;
-            };
-            return {
-                white: [0, 2, 4, 6, 8, 10, 12, 14].map(function (index) {
-                    return createKey(index, true);
-                }),
-                black: [1, 3, 7, 9, 11].map(function (index) {
-                    return createKey(index, false);
-                })
-            };
+
+        var notes = (function () {
+            var whiteArgs = {0: "00", 2: "02", 4: "04", 6: "05", 8: "07", 10: "09", 12: "11", 14: "12"};
+            var blackArgs = {1: "01", 3: "03", 7: "06", 9: "08", 11: "10"};
+            var notes = {white: [], black: []};
+            for (var i in whiteArgs) {
+                notes.white.push(new Note(i, whiteArgs[i]));
+            }
+            for (var i in blackArgs) {
+                notes.black.push(new Note(i, blackArgs[i]));
+            }
+            return notes;
         })();
-        ["00", "02", "04", "05", "07", "09", "11", "12"].map(function (note, index) {
-            keys.white[index].note = note;
-        });
-        ["01", "03", "06", "08", "10"].map(function (note, index) {
-            keys.black[index].note = note;
-        });
 
         var keyboard = (function () {
             var sprite = new Sprite(8 * KEY_WIDTH, KEY_HEIGHT);
@@ -164,11 +164,11 @@ function main() {
                     return null;
                 }
                 if (KEYBOARD_TOP + KEY_BLACK_HEIGHT < y) {
-                    return keys.white[whiteIndex];
+                    return notes.white[whiteIndex];
                 }
                 var blackIndex = Math.floor((localX - (KEY_WIDTH / 2)) / KEY_WIDTH);
                 var foundIndex = [0, 1, 3, 4, 5].indexOf(blackIndex);
-                return (foundIndex !== -1) ? keys.black[foundIndex] : keys.white[whiteIndex];
+                return (foundIndex !== -1) ? notes.black[foundIndex] : notes.white[whiteIndex];
             };
 
             /**
@@ -208,7 +208,7 @@ function main() {
                 }
                 if (pressedKey) {
                     pressedKey.frame++;
-                    playSE(pressedKey.note);
+                    playSE(pressedKey.soundName);
                 }
                 currentKey = pressedKey;
             };
@@ -227,10 +227,10 @@ function main() {
 
         var scene = core.rootScene;
         scene.addChild(background);
-        keys.white.map(function (key) {
+        notes.white.map(function (key) {
             scene.addChild(key);
         });
-        keys.black.map(function (key) {
+        notes.black.map(function (key) {
             scene.addChild(key);
         });
         scene.addChild(keyboard);
