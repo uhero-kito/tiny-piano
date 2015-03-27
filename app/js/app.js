@@ -115,12 +115,14 @@ function main() {
                 }
             }
         });
+        var noop = function () {};
+        var blankNote = {push: noop, release: noop};
 
         /**
          * 現在押されているキーです。
          * @type Sprite
          */
-        var currentKey = null;
+        var currentKey = blankNote;
 
         /**
          * 最後に押されたキーです。(誤発火防止対策）
@@ -172,7 +174,7 @@ function main() {
                 var localX = x - KEYBOARD_LEFT;
                 var whiteIndex = Math.floor(localX / KEY_WIDTH);
                 if (whiteIndex < 0 || 8 <= whiteIndex) {
-                    return null;
+                    return blankNote;
                 }
                 if (KEYBOARD_TOP + KEY_BLACK_HEIGHT < y) {
                     return notes.white[whiteIndex];
@@ -214,23 +216,17 @@ function main() {
                     return;
                 }
 
-                if (currentKey) {
-                    currentKey.release();
-                }
-                if (pressedKey) {
-                    pressedKey.push();
-                }
+                currentKey.release();
+                pressedKey.push();
                 currentKey = pressedKey;
             };
             sprite.addEventListener(Event.TOUCH_START, pressedAction);
             sprite.addEventListener(Event.TOUCH_MOVE, pressedAction);
             sprite.addEventListener(Event.TOUCH_END, function () {
-                if (currentKey) {
-                    currentKey.release();
-                    previousKey = currentKey;
-                    lastReleasedTime = sprite.age;
-                }
-                currentKey = null;
+                currentKey.release();
+                previousKey = currentKey;
+                lastReleasedTime = sprite.age;
+                currentKey = blankNote;
             });
             return sprite;
         })();
