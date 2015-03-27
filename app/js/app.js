@@ -102,6 +102,17 @@ function main() {
                 this.x = KEYBOARD_LEFT + (index * KEY_WIDTH / 2);
                 this.y = KEYBOARD_TOP;
                 this.soundName = soundName;
+            },
+            push: function () {
+                if (this.frame % 2 === 0) {
+                    this.frame++;
+                }
+                playSE(this.soundName);
+            },
+            release: function () {
+                if (this.frame % 2) {
+                    this.frame--;
+                }
             }
         });
 
@@ -204,11 +215,10 @@ function main() {
                 }
 
                 if (currentKey) {
-                    currentKey.frame--;
+                    currentKey.release();
                 }
                 if (pressedKey) {
-                    pressedKey.frame++;
-                    playSE(pressedKey.soundName);
+                    pressedKey.push();
                 }
                 currentKey = pressedKey;
             };
@@ -216,7 +226,7 @@ function main() {
             sprite.addEventListener(Event.TOUCH_MOVE, pressedAction);
             sprite.addEventListener(Event.TOUCH_END, function () {
                 if (currentKey) {
-                    currentKey.frame--;
+                    currentKey.release();
                     previousKey = currentKey;
                     lastReleasedTime = sprite.age;
                 }
