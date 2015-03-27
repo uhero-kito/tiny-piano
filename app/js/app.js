@@ -63,7 +63,7 @@ function main() {
     ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].map(function (filename) {
         core.preload(getSoundFilename(filename));
     });
-    core.preload("img/keys.png");
+    core.preload("img/keys.png", "img/volume-base.png", "img/volume-button.png");
     core.fps = 60;
     core.onload = function () {
         var KEY_WIDTH = 40;
@@ -71,6 +71,7 @@ function main() {
         var KEY_BLACK_HEIGHT = 120;
         var KEYBOARD_LEFT = (DISPLAY_WIDTH / 2) - (4 * KEY_WIDTH);
         var KEYBOARD_TOP = (DISPLAY_HEIGHT / 2) - (KEY_HEIGHT / 2);
+        var VOLUME_TOP = KEYBOARD_TOP + KEY_HEIGHT + 10;
 
         var playSE = function (name) {
             var se = getSoundByName(name);
@@ -303,6 +304,24 @@ function main() {
             });
             return sprite;
         })();
+        var volumeBase = (function () {
+            var width = 160;
+            var height = 40;
+            var sprite = new Sprite(width, height);
+            sprite.image = core.assets["img/volume-base.png"];
+            sprite.x = (DISPLAY_WIDTH / 2) - (width / 2);
+            sprite.y = VOLUME_TOP;
+            return sprite;
+        })();
+        var volumeButton = (function () {
+            var width = 40;
+            var height = 40;
+            var sprite = new Sprite(width, height);
+            sprite.image = core.assets["img/volume-button.png"];
+            sprite.x = (DISPLAY_WIDTH / 2) - (width / 2);
+            sprite.y = VOLUME_TOP;
+            return sprite;
+        })();
 
         var scene = core.rootScene;
         scene.addChild(background);
@@ -313,6 +332,8 @@ function main() {
             scene.addChild(key);
         });
         scene.addChild(keyboard);
+        scene.addChild(volumeBase);
+        scene.addChild(volumeButton);
     };
     core.start();
 }
