@@ -72,6 +72,7 @@ function main() {
         var KEYBOARD_LEFT = (DISPLAY_WIDTH / 2) - (4 * KEY_WIDTH);
         var KEYBOARD_TOP = (DISPLAY_HEIGHT / 2) - (KEY_HEIGHT / 2);
         var VOLUME_TOP = KEYBOARD_TOP + KEY_HEIGHT + 10;
+        var VOLUME_WIDTH = 160;
 
         var playSE = function (name) {
             var se = getSoundByName(name);
@@ -305,7 +306,7 @@ function main() {
             return sprite;
         })();
         var volumeBase = (function () {
-            var width = 160;
+            var width = VOLUME_WIDTH;
             var height = 40;
             var sprite = new Sprite(width, height);
             sprite.image = core.assets["img/volume-base.png"];
@@ -320,6 +321,15 @@ function main() {
             sprite.image = core.assets["img/volume-button.png"];
             sprite.x = (DISPLAY_WIDTH / 2) - (width / 2);
             sprite.y = VOLUME_TOP;
+            var baseHalf = VOLUME_WIDTH / 2;
+            var buttonHalf = width / 2;
+            var xMin = (DISPLAY_WIDTH / 2) - baseHalf;
+            var xMax = (DISPLAY_WIDTH / 2) + baseHalf;
+            sprite.addEventListener(Event.TOUCH_MOVE, function (e) {
+                var x = e.x;
+                var newX = Math.max(Math.min(x, xMax), xMin) - buttonHalf;
+                this.x = newX;
+            });
             return sprite;
         })();
 
