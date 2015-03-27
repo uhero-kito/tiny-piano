@@ -1,4 +1,4 @@
-/* global enchant, Event */
+/* global enchant, Event, Class, Sprite */
 
 function main() {
     var DISPLAY_WIDTH = 360;
@@ -94,17 +94,135 @@ function main() {
             }
         };
 
-        /**
-         * 現在押されているキーです。
-         * @type Sprite
-         */
-        var currentKey = null;
+        var Note = Class.create(Sprite, {
+            initialize: function (index, soundName) {
+                Sprite.call(this, KEY_WIDTH, KEY_HEIGHT);
+                this.image = core.assets["img/keys.png"];
+                this.frame = (index % 2) ? 2 : 0;
+                this.x = KEYBOARD_LEFT + (index * KEY_WIDTH / 2);
+                this.y = KEYBOARD_TOP;
+                this.soundName = soundName;
+                this.isPressed = false;
+            },
+            push: function () {
+                if (this.isPressed) {
+                    return;
+                }
+                if (this.frame % 2 === 0) {
+                    this.frame++;
+                }
+                playSE(this.soundName);
+                this.isPressed = true;
+            },
+            release: function () {
+                this.isPressed = false;
+                if (this.frame % 2) {
+                    this.frame--;
+                }
+            }
+        });
+        var noop = function () {};
+        var blankNote = {push: noop, release: noop};
+
+        var getDistance = function (x1, y1, x2, y2) {
+            return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+        };
+        var Finger = Class.create({
+            initialize: function (x, y) {
+                this.x = x;
+                this.y = y;
+                var n = this.getTouchingNote(x, y);
+                n.push();
+                this.note = n;
+            },
+            getTouchingNote: function (x, y) {
+                var localX = x - KEYBOARD_LEFT;
+                var whiteIndex = Math.floor(localX / KEY_WIDTH);
+                if (whiteIndex < 0 || 8 <= whiteIndex) {
+                    return blankNote;
+                }
+                if (KEYBOARD_TOP + KEY_BLACK_HEIGHT < y) {
+                    return notes.white[whiteIndex];
+                }
+                var blackIndex = Math.floor((localX - (KEY_WIDTH / 2)) / KEY_WIDTH);
+                var foundIndex = [0, 1, 3, 4, 5].indexOf(blackIndex);
+                return (foundIndex !== -1) ? notes.black[foundIndex] : notes.white[whiteIndex];
+            }
+        });
+        var nullFinger = {
+            x: 0,
+            y: 0,
+            note: blankNote,
+            getTouchingNote: function () {
+                return blankNote;
+            }
+        };
+        var Hand = (function () {
+            var getFingerIndex = function (hand, x, y) {
+                var distanceList = hand.fingers.map(function (f) {
+                    return getDistance(x, y, f.x, f.y);
+                });
+                return distanceList.indexOf(Math.min.apply(null, distanceList));
+            };
+            return Class.create({
+                initialize: function () {
+                    this.fingers = [];
+                },
+                touch: function (x, y) {
+                    var finger = new Finger(x, y);
+                    this.fingers.push(finger);
+                },
+                swipe: function (x, y) {
+                    var index = getFingerIndex(this, x, y);
+                    if (index === -1) {
+                        return;
+                    }
+                    var finger = this.fingers[index];
+                    var currentNote = finger.note;
+                    var newNote = finger.getTouchingNote(x, y);
+                    if (currentNote === newNote) {
+                        return;
+                    }
+                    if (newNote === blankNote) {
+                        this.fingers.splice(index, 1);
+                    } else {
+                        finger.note = newNote;
+                        newNote.push();
+                    }
+                    if (!this.isTouching(currentNote)) {
+                        currentNote.release();
+                    }
+                },
+                release: function (x, y) {
+                    var index = getFingerIndex(this, x, y);
+                    if (index === -1) {
+                        return nullFinger;
+                    }
+                    var finger = this.fingers[index];
+                    var note = finger.note;
+                    this.fingers.splice(index, 1);
+                    if (!this.isTouching(note)) {
+                        note.release();
+                    }
+                    return finger;
+                },
+                isTouching: function (note) {
+                    for (var i = 0; i < this.fingers.length; i++) {
+                        if (this.fingers[i].note === note) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            });
+        })();
+        var hand = new Hand();
 
         /**
-         * 最後に押されたキーです。(誤発火防止対策）
-         * @type Sprite
+         * 最後に離された Finger です。(誤発火防止対策）
+         * @type Finger
          */
-        var previousKey = null;
+        var previousFinger = nullFinger;
 
         /**
          * 最後にキーが離された時のフレーム数です。（誤発火防止対策）
@@ -128,109 +246,70 @@ function main() {
             })();
             return sprite;
         })();
-        var keys = (function () {
-            var createKey = function (index, isWhite) {
-                var sprite = new Sprite(KEY_WIDTH, KEY_HEIGHT);
-                sprite.image = core.assets["img/keys.png"];
-                sprite.frame = isWhite ? 0 : 2;
-                sprite.x = KEYBOARD_LEFT + (index * KEY_WIDTH / 2);
-                sprite.y = KEYBOARD_TOP;
-                return sprite;
-            };
-            return {
-                white: [0, 2, 4, 6, 8, 10, 12, 14].map(function (index) {
-                    return createKey(index, true);
-                }),
-                black: [1, 3, 7, 9, 11].map(function (index) {
-                    return createKey(index, false);
-                })
-            };
+
+        var notes = (function () {
+            var whiteArgs = {0: "00", 2: "02", 4: "04", 6: "05", 8: "07", 10: "09", 12: "11", 14: "12"};
+            var blackArgs = {1: "01", 3: "03", 7: "06", 9: "08", 11: "10"};
+            var notes = {white: [], black: []};
+            for (var i in whiteArgs) {
+                notes.white.push(new Note(i, whiteArgs[i]));
+            }
+            for (var i in blackArgs) {
+                notes.black.push(new Note(i, blackArgs[i]));
+            }
+            return notes;
         })();
-        ["00", "02", "04", "05", "07", "09", "11", "12"].map(function (note, index) {
-            keys.white[index].note = note;
-        });
-        ["01", "03", "06", "08", "10"].map(function (note, index) {
-            keys.black[index].note = note;
-        });
 
         var keyboard = (function () {
             var sprite = new Sprite(8 * KEY_WIDTH, KEY_HEIGHT);
             sprite.x = KEYBOARD_LEFT;
             sprite.y = KEYBOARD_TOP;
-            var getPressedKey = function (x, y) {
-                var localX = x - KEYBOARD_LEFT;
-                var whiteIndex = Math.floor(localX / KEY_WIDTH);
-                if (whiteIndex < 0 || 8 <= whiteIndex) {
-                    return null;
-                }
-                if (KEYBOARD_TOP + KEY_BLACK_HEIGHT < y) {
-                    return keys.white[whiteIndex];
-                }
-                var blackIndex = Math.floor((localX - (KEY_WIDTH / 2)) / KEY_WIDTH);
-                var foundIndex = [0, 1, 3, 4, 5].indexOf(blackIndex);
-                return (foundIndex !== -1) ? keys.black[foundIndex] : keys.white[whiteIndex];
-            };
 
             /**
              * 発火したイベントが誤検知かどうかを判定します。
-             * 短期間 (1 フレーム以内) に連打された場合は誤検知とみなします。
+             * 同じ場所で短期間 (1 フレーム以内) に連打された場合は誤検知とみなします。
              * 
-             * @param {Sprite} key イベントによって押されたキー
+             * @param {Event} e 検知したイベント
              * @returns {Boolean} 誤検知の場合は false, そうでない場合は true
              */
-            var validatePressedKey = function (key) {
-                if (!key) {
-                    return true;
-                }
-                if (key !== previousKey) {
+            var validateEvent = function (e) {
+                var prevX = previousFinger.x;
+                var prevY = previousFinger.y;
+                if (5 < getDistance(e.x, e.y, prevX, prevY)) {
                     return true;
                 }
                 return (1 < sprite.age - lastReleasedTime);
             };
 
-            /**
-             * キーボード上をタッチまたはスワイプした際に発火する関数です。
-             * 現在押されているキーを判別し、対応する音声ファイルを鳴らします。
-             * 
-             * @param {Event} e
-             */
-            var pressedAction = function (e) {
-                var pressedKey = getPressedKey(e.x, e.y);
-                if (pressedKey === currentKey) {
+            sprite.addEventListener(Event.TOUCH_START, function (e) {
+                if (!validateEvent(e)) {
                     return;
                 }
-                if (!validatePressedKey(pressedKey)) {
+                hand.touch(e.x, e.y);
+            });
+            sprite.addEventListener(Event.TOUCH_MOVE, function (e) {
+                if (!validateEvent(e)) {
                     return;
                 }
-
-                if (currentKey) {
-                    currentKey.frame--;
+                hand.swipe(e.x, e.y);
+            });
+            sprite.addEventListener(Event.TOUCH_END, function (e) {
+                if (!validateEvent(e)) {
+                    return;
                 }
-                if (pressedKey) {
-                    pressedKey.frame++;
-                    playSE(pressedKey.note);
-                }
-                currentKey = pressedKey;
-            };
-            sprite.addEventListener(Event.TOUCH_START, pressedAction);
-            sprite.addEventListener(Event.TOUCH_MOVE, pressedAction);
-            sprite.addEventListener(Event.TOUCH_END, function () {
-                if (currentKey) {
-                    currentKey.frame--;
-                    previousKey = currentKey;
-                    lastReleasedTime = sprite.age;
-                }
-                currentKey = null;
+                var finger = hand.release(e.x, e.y);
+                previousFinger = finger;
+                lastReleasedTime = sprite.age;
             });
             return sprite;
         })();
 
         var scene = core.rootScene;
         scene.addChild(background);
-        keys.white.map(function (key) {
+        notes.white.map(function (key) {
             scene.addChild(key);
         });
-        keys.black.map(function (key) {
+        notes.black.map(function (key) {
             scene.addChild(key);
         });
         scene.addChild(keyboard);
