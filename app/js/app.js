@@ -74,11 +74,14 @@ function main() {
         var VOLUME_TOP = KEYBOARD_TOP + KEY_HEIGHT + 10;
         var VOLUME_WIDTH = 160;
 
+        var volume = 0.5;
+
         var playSE = function (name) {
             var se = getSoundByName(name);
             switch (enchant.ENV.BROWSER) {
                 case "firefox":
                     se.play();
+                    se.volume = volume;
                     break;
                 case "ie":
                     // IE 10 以下では clone() の負荷が高く遅延が目立つため、既存の Sound オブジェクトを再利用します。
@@ -86,12 +89,17 @@ function main() {
                     if (/MSIE/.test(navigator.userAgent)) {
                         se.stop();
                         se.play();
+                        se.volume = volume;
                     } else {
-                        se.clone().play();
+                        var newSE = se.clone();
+                        newSE.play();
+                        newSE.volume = volume;
                     }
                     break;
                 default:
-                    se.clone().play();
+                    var newSE = se.clone();
+                    newSE.play();
+                    newSE.volume = volume;
                     break;
             }
         };
@@ -327,8 +335,9 @@ function main() {
             var xMax = (DISPLAY_WIDTH / 2) + baseHalf;
             sprite.addEventListener(Event.TOUCH_MOVE, function (e) {
                 var x = e.x;
-                var newX = Math.max(Math.min(x, xMax), xMin) - buttonHalf;
-                this.x = newX;
+                var newX = Math.max(Math.min(x, xMax), xMin);
+                this.x = newX - buttonHalf;
+                volume = (newX - xMin) / (xMax - xMin);
             });
             return sprite;
         })();
