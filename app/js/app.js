@@ -71,7 +71,7 @@ function main() {
         var KEY_BLACK_HEIGHT = 120;
         var KEYBOARD_LEFT = (DISPLAY_WIDTH / 2) - (4 * KEY_WIDTH);
         var KEYBOARD_TOP = (DISPLAY_HEIGHT / 2) - (KEY_HEIGHT / 2);
-        var VOLUME_TOP = KEYBOARD_TOP + KEY_HEIGHT + 10;
+        var VOLUME_TOP = KEYBOARD_TOP + KEY_HEIGHT + 32;
         var VOLUME_WIDTH = 160;
 
         var volume = 0.5;
@@ -319,7 +319,7 @@ function main() {
             var sprite = new Sprite(width, height);
             sprite.image = core.assets["img/volume-base.png"];
             sprite.x = (DISPLAY_WIDTH / 2) - (width / 2);
-            sprite.y = VOLUME_TOP;
+            sprite.y = VOLUME_TOP - (height / 2);
             return sprite;
         })();
         var volumeButton = (function () {
@@ -328,7 +328,7 @@ function main() {
             var sprite = new Sprite(width, height);
             sprite.image = core.assets["img/volume-button.png"];
             sprite.x = (DISPLAY_WIDTH / 2) - (width / 2);
-            sprite.y = VOLUME_TOP - 12;
+            sprite.y = VOLUME_TOP - (height / 2);
             var baseHalf = VOLUME_WIDTH / 2;
             var buttonHalf = width / 2;
             var xMin = (DISPLAY_WIDTH / 2) - baseHalf;
@@ -363,7 +363,7 @@ function main() {
             var sprite = new Sprite(width, height);
             sprite.image = core.assets["img/volume-level.png"];
             sprite.x = (DISPLAY_WIDTH / 2) - (VOLUME_WIDTH / 2) - width;
-            sprite.y = VOLUME_TOP - 12;
+            sprite.y = VOLUME_TOP - (height / 2);
             sprite.frame = 3;
             return sprite;
         })();
