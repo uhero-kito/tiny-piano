@@ -63,7 +63,7 @@ function main() {
     ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].map(function (filename) {
         core.preload(getSoundFilename(filename));
     });
-    core.preload("img/keys.png");
+    core.preload("img/keys.png", "img/volume-base.png", "img/volume-button.png", "img/volume-level.png");
     core.fps = 60;
     core.onload = function () {
         var KEY_WIDTH = 40;
@@ -71,12 +71,17 @@ function main() {
         var KEY_BLACK_HEIGHT = 120;
         var KEYBOARD_LEFT = (DISPLAY_WIDTH / 2) - (4 * KEY_WIDTH);
         var KEYBOARD_TOP = (DISPLAY_HEIGHT / 2) - (KEY_HEIGHT / 2);
+        var VOLUME_TOP = KEYBOARD_TOP + KEY_HEIGHT + 32;
+        var VOLUME_WIDTH = 160;
+
+        var volume = 0.5;
 
         var playSE = function (name) {
             var se = getSoundByName(name);
             switch (enchant.ENV.BROWSER) {
                 case "firefox":
                     se.play();
+                    se.volume = volume;
                     break;
                 case "ie":
                     // IE 10 以下では clone() の負荷が高く遅延が目立つため、既存の Sound オブジェクトを再利用します。
@@ -84,12 +89,17 @@ function main() {
                     if (/MSIE/.test(navigator.userAgent)) {
                         se.stop();
                         se.play();
+                        se.volume = volume;
                     } else {
-                        se.clone().play();
+                        var newSE = se.clone();
+                        newSE.play();
+                        newSE.volume = volume;
                     }
                     break;
                 default:
-                    se.clone().play();
+                    var newSE = se.clone();
+                    newSE.play();
+                    newSE.volume = volume;
                     break;
             }
         };
@@ -303,6 +313,60 @@ function main() {
             });
             return sprite;
         })();
+        var volumeBase = (function () {
+            var width = VOLUME_WIDTH;
+            var height = 40;
+            var sprite = new Sprite(width, height);
+            sprite.image = core.assets["img/volume-base.png"];
+            sprite.x = (DISPLAY_WIDTH / 2) - (width / 2);
+            sprite.y = VOLUME_TOP - (height / 2);
+            return sprite;
+        })();
+        var volumeButton = (function () {
+            var width = 64;
+            var height = 64;
+            var sprite = new Sprite(width, height);
+            sprite.image = core.assets["img/volume-button.png"];
+            sprite.x = (DISPLAY_WIDTH / 2) - (width / 2);
+            sprite.y = VOLUME_TOP - (height / 2);
+            var baseHalf = VOLUME_WIDTH / 2;
+            var buttonHalf = width / 2;
+            var xMin = (DISPLAY_WIDTH / 2) - baseHalf;
+            var xMax = (DISPLAY_WIDTH / 2) + baseHalf;
+            var getVolumeLevelFrame = function (volume) {
+                if (volume === 0) {
+                    return 0;
+                }
+                if (volume < 0.15) {
+                    return 1;
+                }
+                if (volume < 0.45) {
+                    return 2;
+                }
+                if (volume < 0.7) {
+                    return 3;
+                }
+                return 4;
+            };
+            sprite.addEventListener(Event.TOUCH_MOVE, function (e) {
+                var x = e.x;
+                var newX = Math.max(Math.min(x, xMax), xMin);
+                this.x = newX - buttonHalf;
+                volume = (newX - xMin) / (xMax - xMin);
+                volumeLevel.frame = getVolumeLevelFrame(volume);
+            });
+            return sprite;
+        })();
+        var volumeLevel = (function () {
+            var width = 64;
+            var height = 64;
+            var sprite = new Sprite(width, height);
+            sprite.image = core.assets["img/volume-level.png"];
+            sprite.x = (DISPLAY_WIDTH / 2) - (VOLUME_WIDTH / 2) - width;
+            sprite.y = VOLUME_TOP - (height / 2);
+            sprite.frame = 3;
+            return sprite;
+        })();
 
         var scene = core.rootScene;
         scene.addChild(background);
@@ -313,6 +377,9 @@ function main() {
             scene.addChild(key);
         });
         scene.addChild(keyboard);
+        scene.addChild(volumeLevel);
+        scene.addChild(volumeBase);
+        scene.addChild(volumeButton);
     };
     core.start();
 }
