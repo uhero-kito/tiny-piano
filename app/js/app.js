@@ -63,7 +63,7 @@ function main() {
     ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].map(function (filename) {
         core.preload(getSoundFilename(filename));
     });
-    core.preload("img/keys.png", "img/volume-base.png", "img/volume-button.png");
+    core.preload("img/keys.png", "img/volume-base.png", "img/volume-button.png", "img/volume-level.png");
     core.fps = 60;
     core.onload = function () {
         var KEY_WIDTH = 40;
@@ -333,12 +333,38 @@ function main() {
             var buttonHalf = width / 2;
             var xMin = (DISPLAY_WIDTH / 2) - baseHalf;
             var xMax = (DISPLAY_WIDTH / 2) + baseHalf;
+            var getVolumeLevelFrame = function (volume) {
+                if (volume === 0) {
+                    return 0;
+                }
+                if (volume < 0.15) {
+                    return 1;
+                }
+                if (volume < 0.45) {
+                    return 2;
+                }
+                if (volume < 0.7) {
+                    return 3;
+                }
+                return 4;
+            };
             sprite.addEventListener(Event.TOUCH_MOVE, function (e) {
                 var x = e.x;
                 var newX = Math.max(Math.min(x, xMax), xMin);
                 this.x = newX - buttonHalf;
                 volume = (newX - xMin) / (xMax - xMin);
+                volumeLevel.frame = getVolumeLevelFrame(volume);
             });
+            return sprite;
+        })();
+        var volumeLevel = (function () {
+            var width = 64;
+            var height = 64;
+            var sprite = new Sprite(width, height);
+            sprite.image = core.assets["img/volume-level.png"];
+            sprite.x = (DISPLAY_WIDTH / 2) - (VOLUME_WIDTH / 2) - width;
+            sprite.y = VOLUME_TOP - 12;
+            sprite.frame = 3;
             return sprite;
         })();
 
@@ -351,6 +377,7 @@ function main() {
             scene.addChild(key);
         });
         scene.addChild(keyboard);
+        scene.addChild(volumeLevel);
         scene.addChild(volumeBase);
         scene.addChild(volumeButton);
     };
