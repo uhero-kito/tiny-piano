@@ -323,12 +323,12 @@ function main() {
             return sprite;
         })();
         var volumeButton = (function () {
-            var width = 40;
-            var height = 40;
+            var width = 64;
+            var height = 64;
             var sprite = new Sprite(width, height);
             sprite.image = core.assets["img/volume-button.png"];
             sprite.x = (DISPLAY_WIDTH / 2) - (width / 2);
-            sprite.y = VOLUME_TOP;
+            sprite.y = VOLUME_TOP - 12;
             var baseHalf = VOLUME_WIDTH / 2;
             var buttonHalf = width / 2;
             var xMin = (DISPLAY_WIDTH / 2) - baseHalf;
