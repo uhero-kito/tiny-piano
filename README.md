@@ -46,7 +46,7 @@ Firefox Developer Edition をお使いの方は、ソースコードからアプ
 
 1. 以下からソースコード一式をダウンロードします。
 	* [Tiny Piano-Creator Showcase](http://showcase.kddi.com/csc/works/view/78) の「DOWNLOAD」ボタン
-	* GitHub の Release ページにある [tiny_piano-1.0.1.zip](https://github.com/uhero-kito/tiny-piano/releases/download/v1.0.0/tiny_piano-1.0.1.zip)
+	* GitHub の Release ページにある [tiny_piano-1.0.1.zip](https://github.com/uhero-kito/tiny-piano/releases/download/v1.0.1/tiny_piano-1.0.1.zip)
 2. ダウンロードした ZIP ファイルを適当なフォルダに展開します。
 3. Firefox Developer Edition を開き、WebIDE を起動します。
 4. 「パッケージ型アプリを開く」を選択し、「2.」で展開したフォルダ名を指定します。
