@@ -1,6 +1,6 @@
 {
     "default_locale" : "ja",
-    "description"    : "enchant.js を使ったサウンド再生のサンプルです。",
+    "description"    : "1 オクターブだけのピアノ鍵盤です。",
     "developer" : {
         "name" : "KITO, takayuki",
         "url"  : "https://github.com/uhero-kito"
@@ -14,6 +14,6 @@
     "launch_path": "/index.html",
     "name": "Tiny Piano",
     "type": "web",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "csp": "'default-src' *;'script-src' 'self';'object-src' 'none';'frame-src' 'self';'style-src' 'unsafe-inline' 'self';'connect-src'"
 }
